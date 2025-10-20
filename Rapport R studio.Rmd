@@ -1,0 +1,126 @@
+---
+title: "Rapport satisfaction hopital"
+output: html_document
+date: "2025-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Rapport sur la satisfaction à l'hopital
+
+Au sein d'un hopital, nous suivons 534 patients dont les données sont les suivantes : sexe, âge, profession, amelioration.sante, amelioration.moral, recommander (oui=1), score.information relatif à la qualité de l'information durant le séjour à l'hopital et score.relation relatif à la qualité des relations avec le personnel soignant. 
+
+```{r, echo=FALSE}
+data <- read.csv2("C:/Users/HP/Desktop/R Studio/satisfaction_hopital.csv")
+```
+
+Voici le descriptif de nos données : 
+
+```{r, echo=FALSE}
+      data$sexe<- factor(data$sexe,labels=c('homme','femme'))
+      par(mfrow=c(1,2))
+      pie(table(data$sexe),col=c("blue","pink"),main="Représentation du sexe")
+      hist(data$age, main="Représentation des âges des patients",xlab="Âge",ylab="",col="grey")
+  
+```
+
+Voici les caractéristiques de la variable: score.relation (=proximité avec le personnel soignant) selon le sexe :
+
+
+```{r, echo=FALSE}
+
+boxplot(data$score.relation~data$sexe, main="Representation des scores de relation selon l'âge",
+        xlab="Sexe",ylab="Score de relation", col='purple')
+by(data$score.relation,data$sexe,mean,na.rm=TRUE)
+
+```
+Les hommes semblent mieux s'entendre avec le personnel soignant: 35.5/40 en moyenne vs 34.9/40 pour les femmes. 
+
+
+```{r, echo=FALSE}
+   t.test(data$score.relation~data$sexe,var.equal=TRUE)
+     
+```
+On applique le test de student pour voir s'il y a une différence significative entre nos 2 groupes (homme/femme). P-value = 26.5% donc on rejette l'hypothèse : les 2 groupes sont similaires.On admet que la moyenne de nos 2 groupes est similaire.
+
+
+```{r, echo=FALSE}
+  data$recommander.b <- ifelse(data$recommander==2,1,0)
+  fisher.test(data$recommander.b,data$sexe)
+    
+```
+Avec le test de Fisher, on analyse de la même manière la variable binaire : recommander. P-value =0.75 donc les hommes/femmes ne diffèrent pas.
+
+
+On cherche à expliquer la variable "recommander" en fonction des autres variables par la regression logistique :
+
+```{r, echo=FALSE}
+reg<-glm(data$recommander.b~data$age+data$sexe+data$score.information+data$amelioration.sante+
+            data$amelioration.moral+data$profession+data$service,family="binomial")
+summary(reg)   
+```
+
+La variable "recommander" dépend des variables: score.information, amelioration santé et moral. Les autres variables ont une p-value trop élevée. 
+
+```{r, echo=FALSE}
+reg2<-glm(data$recommander.b~data$score.information+data$amelioration.sante+data$amelioration.moral,family="binomial")
+summary(reg2)
+
+exp(coefficients(reg2))   
+```
+Ci-dessus les coefficients des 3 variables explicatives. Autrement dit, si le moral du patient s'améliore, on a 1.3X plus de probabilité que ce patient recommande l'hopital.
+
+
+Maintenant, on essaie de voir s'il existe des corrélations entre les variables.
+
+
+```{r, echo=FALSE}
+   library(corrplot)
+  var=c("age","amelioration.sante","amelioration.moral","score.relation","recommander.b","score.information")
+  par(mfrow=c(1,1))
+    par(mfrow=c(1,1))
+corrplot(cor(data[,var],use="complete.obs"),method="circle", col="pink", title="Matrice de corrélation",tl.col="blue",rect.col="black")
+```
+
+On peut observer une légère corrélation entre les variables :
+
+- amelioration.moral et amelioration.sante
+
+- recommander et score.relation
+
+- score.information et score.relation
+
+
+Expliquons la variable "recommander" en fonction des autres variables avec l'analyse en composante principale :
+
+```{r, echo=FALSE}
+      library(psy)
+        fpca(data=data,y="recommander.b",x=var,partial="No")
+```
+
+La variable "recommander" est corrélée r=0.5 avec le score.relation. A l'inverse, elle n'est pas du tout liée à l'âge. 
+
+
+Et voici un arbre de classification hierarchique des variables :
+
+```{r, echo=FALSE}
+      cat<-hclust(dist(t(scale(data[,var]))), method="ward.D")  
+    plot(cat, main="Arbre de classification",xlab="")
+```
+
+L'âge a peu de lien avec les autres variables. On retrouve les mêmes conclusions que vues précédemment. 
+
+
+
+```{r}
+
+```
+
+```{r, echo=FALSE}
+        
+```
+
+
+
