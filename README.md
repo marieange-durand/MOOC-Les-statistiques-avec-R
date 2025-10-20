@@ -5,4 +5,4 @@ la matrice de corrélation, l'analyse en composante principale et la classificat
 
 J'ai reçu un badge d'accomplissement à 78% (60% nécessaire pour valider ce badge)
 
-J'ai upload un résumé de mes travaux en HTML et son code correspondant (R HTML)
+J'ai upload un résumé de mes travaux en HTML et son code correspondant (RMD)
